@@ -1,0 +1,31 @@
+## Image modification functionality
+- [ ] Text
+    - [ ] Text justification and alignment
+    - [ ] Line-wrapping
+    - [ ] Auto fitting
+- [ ] Useful addons
+    - [ ] Templating: lets you create reusable templates for bulk changes
+
+## Text & Barcode Rendering System
+- [ ] Dynamic text fitting
+    - [ ] Adjust font size to fit bounding box
+    - [ ] Multiline line-breaking support
+    - [ ] Line height customization
+- [ ] Alignment and positioning
+    - [ ] Anchoring system for text placement (`lt`, `mm`, etc.)
+    - [ ] Upside-down/inverted text rendering
+- [ ] Font loading abstraction
+    - [ ] External font loader injection
+- [ ] Barcode rendering
+    - [ ] Code128 rendering using `barcoders`?
+        - [ ] Module height scaling to fit bounding box
+    - [ ] QR code rendering using `barcoders`?
+        - [ ] Configurable colors, box size, border
+- [ ] Rendering backend
+    - [ ] Abstraction layer (`ImageWrapper`) wraps `images::DynamicImage`
+    - [ ] Resizing and pasting final render into base image
+- [ ] Optimization
+    - [ ] Replace font size linear search with binary search
+    - [ ] Improve draw inversion logic (clean up `invert_text` code)
+- [ ] Extensibility
+    - [ ] Add support for more barcode types

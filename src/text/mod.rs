@@ -16,6 +16,20 @@ pub enum TextAlignment {
     Justify,
 }
 
+/// Options for Text anchor points.
+#[derive(PartialEq)]
+pub enum Anchor {
+    TopLeft,
+    TopCenter,
+    TopRight,
+    CenterLeft,
+    Center,
+    CenterRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+}
+
 /// A struct representing a text object.
 pub struct Text<'a> {
     pub content: String,
@@ -24,6 +38,7 @@ pub struct Text<'a> {
     pub color: Option<Rgba<u8>>,
     pub field: Option<Rectangle>,
     pub alignment: TextAlignment,
+    pub anchor: Option<Anchor>,
     pub max_width: Option<u32>,
     pub line_height: Option<f32>,
     pub rotation_deg: Option<f32>,
@@ -31,7 +46,7 @@ pub struct Text<'a> {
 }
 
 /// A trait for drawable objects.
-impl<'a> Drawable for Text<'a> {
+impl Drawable for Text<'_> {
     /// Draws the text on the given image.
     fn draw(&self, image: &mut DynamicImage) {
         if let Some(font) = &self.font {
@@ -85,6 +100,40 @@ impl<'a> Drawable for Text<'a> {
                 }
                 TextAlignment::Justify => 0.0,
             };
+
+            let anchor_offset = match self.anchor {
+                Some(Anchor::TopLeft) => (0.0, 0.0),
+                Some(Anchor::TopCenter) => {
+                    (self.field.map_or(0, |field| field.width) as f32 / 2.0, 0.0)
+                }
+                Some(Anchor::TopRight) => (self.field.map_or(0, |field| field.width) as f32, 0.0),
+                Some(Anchor::CenterLeft) => {
+                    (0.0, self.field.map_or(0, |field| field.height) as f32 / 2.0)
+                }
+                Some(Anchor::Center) => (
+                    self.field.map_or(0, |field| field.width) as f32 / 2.0,
+                    self.field.map_or(0, |field| field.height) as f32 / 2.0,
+                ),
+                Some(Anchor::CenterRight) => (
+                    self.field.map_or(0, |field| field.width) as f32,
+                    self.field.map_or(0, |field| field.height) as f32 / 2.0,
+                ),
+                Some(Anchor::BottomLeft) => {
+                    (0.0, self.field.map_or(0, |field| field.height) as f32)
+                }
+                Some(Anchor::BottomCenter) => (
+                    self.field.map_or(0, |field| field.width) as f32 / 2.0,
+                    self.field.map_or(0, |field| field.height) as f32,
+                ),
+                Some(Anchor::BottomRight) => (
+                    self.field.map_or(0, |field| field.width) as f32,
+                    self.field.map_or(0, |field| field.height) as f32,
+                ),
+                None => (0.0, 0.0),
+            };
+
+            let draw_x = (draw_x as f32 - anchor_offset.0) as u32;
+            let draw_y = (draw_y as f32 - anchor_offset.1) as u32;
 
             caret += alignment_offset;
 

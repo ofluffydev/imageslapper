@@ -19,6 +19,8 @@
 
       fontconfig = pkgs.fontconfig;
       pkg-config = pkgs.pkg-config;
+      mdformat = pkgs.python312Packages.mdformat;
+      scc = pkgs.scc;
       toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
       rustHelloWorld = pkgs.rustPlatform.buildRustPackage {
@@ -31,9 +33,11 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         packages = [
+          mdformat
           toolchain
           fontconfig
           pkg-config
+          scc
         ];
       };
 

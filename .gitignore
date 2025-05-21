@@ -1,3 +1,7 @@
 /target
 /testing*
+/.cache
 .direnv
+
+flamegraph.svg
+perf.data

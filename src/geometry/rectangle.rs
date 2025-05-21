@@ -1,21 +1,19 @@
 use image::DynamicImage;
-use rayon::{
-    iter::{IndexedParallelIterator, ParallelIterator},
-    slice::ParallelSliceMut,
-};
 use rgb::Rgba;
+use tracing::debug;
 
+use crate::primitive::layer::{BlendMode, Layer, PixelProvider, Transform};
 use crate::rendering::draw::Drawable;
 
 /// Border types for rectangles.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum BorderType {
     Solid,
     Dashed,
 }
 
 /// Border for a rectangle.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Border {
     pub thickness: u8,
     pub color: Rgba<u8>,
@@ -34,7 +32,7 @@ impl Default for Border {
 }
 
 /// Rectangle struct for drawing rectangles on images.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Rectangle {
     pub x1: u32,
     pub y1: u32,
@@ -90,41 +88,78 @@ impl Rectangle {
             fill_color: Some(fill_color),
         }
     }
+
+    /// Converts the rectangle into a layer for rendering.
+    pub fn to_layer(&self) -> Layer<Self> {
+        Layer {
+            content: *self,
+            position: (self.x1 as f64, self.y1 as f64),
+            z_index: 0,                       // Default z-index
+            opacity: 1.0,                     // Default opacity
+            blend_mode: BlendMode::Normal,    // Default blend mode
+            transform: Transform::identity(), // No transformations by default
+            visible: true,                    // Default visibility
+            clip_mask: None,                  // No clipping mask by default
+            last_render_hash: 0,              // Default hash
+        }
+    }
+}
+
+impl PixelProvider for Rectangle {
+    fn pixel_at(&self, x: u32, y: u32) -> rgb::Rgba<u8> {
+        if self.filled {
+            return self.fill_color.unwrap_or(Rgba::new(0, 0, 0, 255));
+        }
+
+        if let Some(border) = &self.border {
+            let within_x_bounds = x >= self.x1 && x < self.x2;
+            let within_y_bounds = y >= self.y1 && y < self.y2;
+
+            let on_left_or_right_border = within_y_bounds
+                && (x < self.x1 + border.thickness as u32
+                    || x >= self.x2 - border.thickness as u32);
+            let on_top_or_bottom_border = within_x_bounds
+                && (y < self.y1 + border.thickness as u32
+                    || y >= self.y2 - border.thickness as u32);
+
+            if on_left_or_right_border || on_top_or_bottom_border {
+                return border.color;
+            }
+        }
+
+        Rgba::new(0, 0, 0, 0) // Transparent
+    }
+
+    fn width(&self) -> u32 {
+        self.width
+    }
+
+    fn height(&self) -> u32 {
+        self.height
+    }
 }
 
 impl Drawable for Rectangle {
     fn draw(&self, image: &mut DynamicImage) {
-        if self.width == 0 || self.height == 0 {
-            return;
+        debug!(
+            "Drawing rectangle at ({}, {}) with dimensions {}x{}",
+            self.x1, self.y1, self.width, self.height
+        );
+        let layer = self.to_layer();
+        let delta_buffer = layer.collect_changes(None);
+
+        debug!(
+            "Collected {} pixel changes for rendering.",
+            delta_buffer.changes.len()
+        );
+
+        // Apply the delta buffer to the image
+        let mut img = image.to_rgba8();
+        for change in delta_buffer.changes {
+            let idx = ((change.y * img.width() + change.x) * 4) as usize;
+            img.as_mut()[idx..idx + 4].copy_from_slice(&change.color);
         }
 
-        let (width, height) = (image.width(), image.height());
-        let mut img = image.to_rgba8().into_raw();
-
-        let fill_color = self.fill_color.unwrap_or(Rgba::new(0, 0, 0, 255));
-        let fill_color = image::Rgba([fill_color.r, fill_color.g, fill_color.b, fill_color.a]);
-
-        let start_x = self.x1;
-        let end_x = (self.x1 + self.width).min(width);
-        let start_y = self.y1;
-        let end_y = (self.y1 + self.height).min(height);
-
-        img.par_chunks_mut((width * 4) as usize)
-            .enumerate()
-            .for_each(|(j, row)| {
-                if j >= start_y as usize && j < end_y as usize {
-                    let row_start = (start_x * 4) as usize;
-                    let row_end = (end_x * 4) as usize;
-
-                    row[row_start..row_end]
-                        .chunks_exact_mut(4)
-                        .for_each(|pixel| {
-                            pixel.copy_from_slice(&fill_color.0);
-                        });
-                }
-            });
-
-        let new_image = image::ImageBuffer::from_raw(width, height, img).unwrap();
-        *image = DynamicImage::ImageRgba8(new_image);
+        *image = DynamicImage::ImageRgba8(img);
     }
 }

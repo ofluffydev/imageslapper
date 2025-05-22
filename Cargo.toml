@@ -11,7 +11,7 @@ categories = ["graphics", "image-processing", "command-line-utilities"]
 
 [dependencies]
 barcoders = { version = "2.0.0", features = ["image"] }
-image = "0.25.6"
+image = { version = "0.25.6", features = ["avif", "avif-native"] }
 qoi = "0.4.1"
 rayon = "1.10.0"
 rgb = "0.8.50"

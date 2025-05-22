@@ -1,6 +1,6 @@
-use barcoders::sym::code128::Code128;
 use barcoders::generators::image::*;
-use image::{DynamicImage, RgbaImage, Rgba};
+use barcoders::sym::code128::Code128;
+use image::{DynamicImage, Rgba, RgbaImage};
 
 /// Generates a Code128 barcode image from the given input string, with specified dimensions and margins.
 pub fn from(input: &str, width: u32, height: u32, margin: u32) -> Result<DynamicImage, String> {
@@ -8,7 +8,10 @@ pub fn from(input: &str, width: u32, height: u32, margin: u32) -> Result<Dynamic
         return Err("Input string cannot be empty".to_string());
     }
     if !input.is_ascii() {
-        return Err("Input string contains invalid characters. Only ASCII characters are allowed.".to_string());
+        return Err(
+            "Input string contains invalid characters. Only ASCII characters are allowed."
+                .to_string(),
+        );
     }
 
     // Determine the starting character based on the character set (This is stupid, I'll pr this crate later.)
@@ -31,26 +34,30 @@ pub fn from(input: &str, width: u32, height: u32, margin: u32) -> Result<Dynamic
 
     // Load the barcode image
     let barcode_image = image::load_from_memory(&png_vec).map_err(|e| e.to_string())?;
-    let barcode_width = barcode_image.width();
     let barcode_height = barcode_image.height();
 
     // Create a blank image with the specified dimensions and a solid white background
     let mut canvas = RgbaImage::from_pixel(width, height, Rgba([255, 255, 255, 255]));
 
-    // Resize the barcode image while maintaining its aspect ratio
+    // Resize the barcode image to fill the entire width between margins
     let resized_barcode = image::imageops::resize(
         &barcode_image.to_rgba8(),
-        (width - margin * 2).min(barcode_width),
+        width - margin * 2, // Fill the entire width minus margins
         (height - margin * 2).min(barcode_height),
         image::imageops::FilterType::Lanczos3,
     );
 
-    // Recalculate offsets to center the resized barcode
-    let x_offset = margin + (width - margin * 2 - resized_barcode.width()) / 2;
+    // Set x_offset to just the margin since we're filling the width
+    let x_offset = margin;
     let y_offset = margin + (height - margin * 2 - resized_barcode.height()) / 2;
 
     // Overlay the resized barcode onto the canvas
-    image::imageops::overlay(&mut canvas, &resized_barcode, x_offset.into(), y_offset.into());
+    image::imageops::overlay(
+        &mut canvas,
+        &resized_barcode,
+        x_offset.into(),
+        y_offset.into(),
+    );
 
     Ok(DynamicImage::ImageRgba8(canvas))
 }

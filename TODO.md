@@ -1,15 +1,54 @@
-# Architecture Checklist
+# TODO.md
 
-## Core Architecture
+## 🚧 Active Feature Checklist (from Changelog)
 
+### Text Drawing
+- [ ] Implement horizontal text drawing
+- [ ] Implement multiline text drawing
+- [ ] Support inverted multiline text drawing
+- [ ] Allow text color configuration
+- [ ] Add `min_font_size` parameter in `TextConfig`
+- [ ] Rename `font_size` to `max_font_size` in `TextConfig`
+- [ ] Optimize text fitting with binary search-like algorithm
+
+### Barcode Support
+- [ ] Add Code 128 barcode drawing
+  - [ ] Ensure field-filling behavior
+  - [ ] Use top-level config keys in `options`
+- [ ] Add QR code drawing support
+  - [ ] Support `error_correction` parameter
+  - [ ] Support `mask_pattern` parameter
+  - [ ] Support `background_color` parameter
+  - [ ] Support `foreground_color` parameter
+
+### Configuration Models
+- [ ] Finalize `TextConfig` model with updated parameters
+- [ ] Implement full `QRCodeConfig` model
+- [ ] Update `Code128Config` to use top-level keys
+- [ ] Rename and implement `RelativeContainer` with `direction`
+- [ ] Update `RelativeDataFieldFormat` with `direction` support
+
+### Utilities
+- [ ] Create utilities for angled text rendering
+
+### Validation & Safety
+- [ ] Validate coordinates in `XYXY` model
+- [ ] Validate coordinates in `XYWH` model
+- [ ] Ensure `Draw.text` and `Draw.barcode` ignore `None` or empty strings
+- [ ] Forbid extra fields in models from `draw.py` and `fields.py`
+
+---
+
+## 🏗️ Architecture Checklist
+
+### Core Architecture
 - [ ] Central image rendering logic separated into a pure core crate
 - [ ] Shared data structures and rendering primitives used by all interfaces
 - [ ] Plug-in system for optional features like filters, barcode types, etc.
 - [ ] Error handling with rich context (`thiserror`, `anyhow`)
 - [ ] Feature flags to reduce dependency load for CLI/API-specific builds
 
-## CLI Tool Features
-
+### CLI Tool Features
 - [ ] Uses `clap` or `argh` for robust argument parsing
 - [ ] Supports config file loading (`.toml`, `.json`, `.yaml`)
 - [ ] Subcommands:
@@ -21,8 +60,7 @@
 - [ ] Hot-reload mode: watch templates/data sources for live re-rendering
 - [ ] Image previews optionally shown in terminal (via ASCII/iterm preview)
 
-## Library API Features
-
+### Library API Features
 - [ ] Modular crate exposing both high- and low-level APIs
 - [ ] Builder-style usage (`ImageBuilder::new().add_text(...).render()`)
 - [ ] Accepts both in-memory and file-based inputs
@@ -39,8 +77,7 @@
   - [ ] `api`
   - [ ] `cli`
 
-## Web API Server Features
-
+### Web API Server Features
 - [ ] Built on `axum`, `actix-web`, or `warp`
 - [ ] Exposed routes:
   - [ ] `POST /render`: accepts JSON + base image (multipart)
@@ -53,9 +90,8 @@
 - [ ] Optional WebSocket endpoint for continuous preview
 - [ ] Rate limiting middleware
 
-## Image Feature Set
-
-- [x] Composable layers with Z-index and blend modes
+### Image Feature Set
+- [ ] Composable layers with Z-index and blend modes
 - [ ] Text rendering with alignment, justification, dynamic wrapping
 - [ ] Anchored layout (e.g., top-left, center-center, bottom-right)
 - [ ] Automatic font sizing and multi-line text blocks
@@ -77,8 +113,7 @@
 - [ ] Variable data printing with dynamic field positioning
 - [ ] Raster-to-vector conversion for text/shape elements
 
-## Scaling, Concurrency, and Job Queues
-
+### Scaling, Concurrency, and Job Queues
 - [ ] Use of thread-safe queues for background rendering (`crossbeam`, `tokio::sync::mpsc`)
 - [ ] Asynchronous API server endpoints using `tokio`
 - [ ] Job queue integration:
@@ -101,16 +136,14 @@
 - [ ] Blue/green deployment support for API server
 - [ ] Observability stack with tracing spans for complex operations
 
-## Developer Experience & Documentation
-
+### Developer Experience & Documentation
 - [ ] Interactive playground web UI for testing templates/designs
 - [ ] Comprehensive examples repository with common use cases
 - [ ] API documentation with runnable code samples
 - [ ] Visual debugging mode showing layer composition/render steps
 - [ ] Benchmarking suite for performance regression testing
 
-## Integration & Ecosystem
-
+### Integration & Ecosystem
 - [ ] Headless browser automation for capturing web content as image source
 - [ ] Plug-ins for design tools (Figma, Sketch) to export templates
 - [ ] Direct integration with popular CMS systems
@@ -120,8 +153,7 @@
 - [ ] AI-assisted layout suggestions and automated design
 - [ ] Container images for easy deployment
 
-## Security & Compliance
-
+### Security & Compliance
 - [ ] Image content validation/sanitization
 - [ ] Input validation and sanitization system
 - [ ] Resource usage quotas and limits
